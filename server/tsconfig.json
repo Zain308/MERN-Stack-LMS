@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    // Environment & Module Setup
+    "target": "ES2022", 
+    "module": "CommonJS",
+    "moduleResolution": "node10", 
+    
+    // File Layout (Since your files are directly inside the server folder)
+    "rootDir": "./",
+    "outDir": "./dist",
+
+    // Interoperability (CRUCIAL for Express, CORS, and Cookie-Parser)
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Stricter Typechecking Options
+    "strict": true,
+    "noImplicitAny": true,
+    
+    // Other Outputs
+    "sourceMap": true,
+    "skipLibCheck": true
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
