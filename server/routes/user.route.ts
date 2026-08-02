@@ -1,7 +1,13 @@
 import express from 'express';
-import { registerationUser } from '../controllers/user.controller';
-const router = express.Router();
+import { activateUser, loginUser, logoutUser, registerationUser } from '../controllers/user.controller';
+import { isAuthenticated } from '../middleware/auth';
+const userRouter = express.Router();
 
-router.post('/registration',registerationUser);
+userRouter.post('/registration',registerationUser);
+userRouter.post('/activate-user',activateUser);
+userRouter.post('/login',loginUser);
+userRouter.get('/logout',isAuthenticated,logoutUser);
 
-export default router;
+
+
+export default userRouter;
