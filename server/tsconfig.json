@@ -3,7 +3,6 @@
     // Environment & Module Setup
     "target": "ES2022", 
     "module": "CommonJS",
-    "moduleResolution": "node10", 
     
     // File Layout (Since your files are directly inside the server folder)
     "rootDir": "./",
