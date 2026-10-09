@@ -1,14 +1,33 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CourseInformation from "./CourseInformation";
 import CourseOptions from "./CourseOptions";
 import CourseData from "./CourseData";
-import CourseContent from "./CourseContent"
-import CoursePreview from "./CoursePreview"
+import CourseContent from "./CourseContent";
+import CoursePreview from "./CoursePreview";
+import { useCreateCourseMutation } from "@/redux/features/courses/coursesApi";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation"; // Bug 1 Fixed: Use router instead of redirect
 
 type Props = {};
 
 const CreateCourse = (props: Props) => {
+  const router = useRouter();
+  const [createCourse, { isLoading, isSuccess, error }] = useCreateCourseMutation();
+
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success("Course created successfully");
+      router.push("/admin/courses"); // Bug 1 Fixed: Correct client-side redirect
+    }
+    if (error) {
+      if ("data" in error) {
+        const errorMessage = error as any;
+        toast.error(errorMessage.data.message);
+      }
+    }
+  }, [isSuccess, error, router]);
+
   const [active, setActive] = useState(0);
   const [courseInfo, setCourseInfo] = useState({
     name: "",
@@ -19,6 +38,7 @@ const CreateCourse = (props: Props) => {
     level: "",
     demoUrl: "",
     thumbnail: "",
+    category: "", // Bug 3 Fixed: Added missing category field
   });
 
   const [benefits, setBenefits] = useState([{ title: "" }]);
@@ -29,6 +49,7 @@ const CreateCourse = (props: Props) => {
       title: "",
       description: "",
       videoSection: "Untitled Section",
+      videoLength: "", // Bug 4 Fixed: Added videoLength to initial state
       links: [
         {
           title: "",
@@ -39,26 +60,25 @@ const CreateCourse = (props: Props) => {
     },
   ]);
 
-  const [courseData, setCourseData] = useState({});
+  const [courseData, setCourseData] = useState<any>({});
 
-  const handleSubmit = async() => {
-    const formattedBenefits = benefits.map((benefit) => ({title:benefit.title}));
+  const handleSubmit = () => {
+    const formattedBenefits = benefits.map((benefit) => ({ title: benefit.title }));
+    const formattedPrerequesties = prerequesties.map((prereq) => ({ title: prereq.title }));
 
-    const formattedPrerequesties = prerequesties.map((prerequesties)=>({title:prerequesties.title}));
-
-    // Format course content array
-    const formattedCourseContentData = courseContentData.map((courseContent)=>({
+    const formattedCourseContentData = courseContentData.map((courseContent) => ({
       videoUrl: courseContent.videoUrl,
       title: courseContent.title,
       description: courseContent.description,
+      videoLength: courseContent.videoLength,
+      videoSection: courseContent.videoSection,
       links: courseContent.links.map((link) => ({
         title: link.title,
         url: link.url,
       })),
-      suggestion: courseContent.suggestion
-    }))
+      suggestion: courseContent.suggestion,
+    }));
 
-    // prepare our data object
     const data = {
       name: courseInfo.name,
       description: courseInfo.description,
@@ -66,21 +86,24 @@ const CreateCourse = (props: Props) => {
       estimatedPrice: courseInfo.estimatedPrice,
       tags: courseInfo.tags,
       thumbnail: courseInfo.thumbnail,
-      level:courseInfo.level,
+      level: courseInfo.level,
       demoUrl: courseInfo.demoUrl,
-      totalVideos: courseInfo.demoUrl,
-      benefits:formattedBenefits,
+      category: courseInfo.category,
+      totalVideos: courseContentData.length.toString(), // Bug 3 Fixed: Fixed totalVideos mapping
+      benefits: formattedBenefits,
       prerequesties: formattedPrerequesties,
-      courseContentData: formattedCourseContentData,
+      courseData: formattedCourseContentData,
     };
 
     setCourseData(data);
-  }
+    setActive(active + 1); // Move to preview step securely after setting data
+  };
 
-  const handleCourseCreate = async(e:any) => {
-    const data = courseData;
-  }
-
+  const handleCourseCreate = async () => {
+    if (!isLoading) {
+      await createCourse(courseData);
+    }
+  };
 
   return (
     <div className="w-full flex min-h-screen">
@@ -120,9 +143,9 @@ const CreateCourse = (props: Props) => {
             handleCourseCreate={handleCourseCreate}
           />
         )}
-        <div className="w-[20%] mt-[100px] h-screen fixed z-[-1] top-18 right-0">
-          <CourseOptions active={active} setActive={setActive} />
-        </div>
+      </div>
+      <div className="w-[20%] mt-[100px] h-screen fixed z-[-1] top-18 right-0">
+        <CourseOptions active={active} setActive={setActive} />
       </div>
     </div>
   );

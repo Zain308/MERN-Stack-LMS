@@ -1,5 +1,6 @@
 import { styles } from '@/app/styles/style';
-import React, { FC } from 'react';
+import { useGetHeroDataQuery } from '@/redux/features/layout/layoutApi';
+import React, { FC, useState, useEffect } from 'react';
 
 type Props = {
   courseInfo: any;
@@ -9,51 +10,57 @@ type Props = {
 }
 
 const CourseInformation: FC<Props> = ({ courseInfo, setCourseInfo, active, setActive }) => {
+  const { data } = useGetHeroDataQuery("Categories", {});
+  const [categories, setCategories] = useState<any[]>([]);
+  const [dragging, setDragging] = useState(false); // Bug 1 Fixed: Added dragging state
+
+  useEffect(() => {
+    if (data) {
+      setCategories(data.categories || data); // Bug 2 Fixed: Populate categories from API data
+    }
+  }, [data]);
+
   const handleSubmit = (e: any) => {
     e.preventDefault();
     setActive(active + 1);
   };
 
-  const handleFileChange = (e:any) => {
+  const handleFileChange = (e: any) => {
     const file = e.target.files?.[0];
-    if(file){
+    if (file) {
       const reader = new FileReader();
-      reader.onload = (e:any) => {
-        if(reader.readyState === 2){
-          setCourseInfo({...courseInfo,thumbnail,image:reader.result});
+      reader.onload = (event: any) => {
+        if (reader.readyState === 2) {
+          setCourseInfo({ ...courseInfo, thumbnail: reader.result }); // Bug 3 Fixed: Corrected thumbnail assignment
         }
       };
       reader.readAsDataURL(file);
     }
   }
 
-  const handleDragOver = (e:any) => {
+  const handleDragOver = (e: any) => {
     e.preventDefault();
     setDragging(true);
   }
 
-  const handleDragLeave = (e:any) => {
+  const handleDragLeave = (e: any) => {
     e.preventDefault();
     setDragging(false);
   }
 
-  const handleDrop = (e:any) => {
+  const handleDrop = (e: any) => {
     e.preventDefault();
     setDragging(false);
 
     const file = e.dataTransfer.files?.[0];
 
-    if(file){
+    if (file) {
       const reader = new FileReader();
-      
-      reader.onload=()=>{
-        setCourseInfo({...courseInfo,thumbnail:reader.result});
+      reader.onload = () => {
+        setCourseInfo({ ...courseInfo, thumbnail: reader.result });
       }
-
       reader.readAsDataURL(file);
-
     }
-
   }
 
   return (
@@ -135,41 +142,34 @@ const CourseInformation: FC<Props> = ({ courseInfo, setCourseInfo, active, setAc
         </div>
         <br />
         <div>
-          <label className={`${styles.label}`} htmlFor='demoUrl'>Demo Url</label>
-          <input 
-            type="text"
-            required
-            value={courseInfo.demoUrl}
-            onChange={(e: any) =>
-              setCourseInfo({...courseInfo, demoUrl: e.target.value})
-            } 
-            id='demoUrl'
-            placeholder='https://www.youtube.com/watch?v=...'
-            className={`${styles.input}`}
-          />
-        </div>
-        <br />
-        <div className="w-flex flex items-end justify-end">
-          <input 
-            type="submit" 
-            value="Next" 
-            className="w-full 800px:w-[180px] h-[40px] bg-[#37a39a] text-center text-[#fff] rounded cursor-pointer mt-8"
-          />
+          <label className={`${styles.label}`}>Course Categories</label>
+          <select 
+            className={`${styles.input}`} 
+            value={courseInfo.category}
+            onChange={(e: any) => setCourseInfo({...courseInfo, category: e.target.value})}
+          >
+            <option value="">Select Category</option>
+            {categories.map((item: any) => (
+              <option value={item._id} key={item._id}>
+                {item.title}
+              </option>
+            ))}
+          </select>
         </div>
         <br />
         <div className="w-full">
           <input 
-            type="text" 
+            type="file" // Bug 4 Fixed: Changed from "text" to "file"
             accept='image/*'
             id='file'
             className='hidden'
             onChange={handleFileChange}  
           />
           <label 
-          htmlFor="file"
-          className={`w-full min-h-[10vh] dark:border-white border-[#00000026] p-3 border flex items-center justify-center ${
-            dragging ? "bg-blue-500" : "bg-transparent"
-          }`}
+            htmlFor="file"
+            className={`w-full min-h-[10vh] dark:border-white border-[#00000026] p-3 border flex items-center justify-center cursor-pointer ${
+              dragging ? "bg-blue-500" : "bg-transparent"
+            }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -189,7 +189,7 @@ const CourseInformation: FC<Props> = ({ courseInfo, setCourseInfo, active, setAc
         <div className="w-full flex items-center justify-end">
             <input 
               type="submit"  
-              value="text"
+              value="Next"
               className='w-full 800px:w-[180px] h-[40px] bg-[#37a39a] text-center text-[#fff] rounded mt-8 cursor-pointer'
             />
         </div>
